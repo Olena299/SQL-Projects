@@ -1,0 +1,45 @@
+У цьому завданні потрібно згрупувати доходи та витрати по роках та місяцях.
+Подай результат у наступному форматі:
+|year |month |revenue |cost |
+Використай оператор UNION для об’єднання даних про доходи та витрати.
+
+SELECT
+    year,
+    month,
+    SUM(revenue) AS revenue,
+    SUM(cost) AS cost
+FROM (
+    -- Subquery to calculate revenue by year and month
+    SELECT
+        EXTRACT(YEAR FROM date) AS year, -- Extract the year from the date
+        EXTRACT(MONTH FROM date) AS month, -- Extract the month from the date
+        SUM(pr.price) AS revenue, -- Calculate total revenue by summing product prices
+        0 AS cost -- Set cost to 0 for revenue calculations
+    FROM
+        `data-analytics-mate.DA.product` pr 
+    JOIN
+        `data-analytics-mate.DA.order` ord 
+    ON
+        pr.item_id = ord.item_id 
+    JOIN
+        `data-analytics-mate.DA.session` se 
+    ON
+        ord.ga_session_id = se.ga_session_id 
+    GROUP BY
+        year, month -- Group results by year and month
+    UNION ALL
+    -- Subquery to calculate cost by year and month
+    SELECT
+        EXTRACT(YEAR FROM date) AS year, -- Extract the year from the date
+        EXTRACT(MONTH FROM date) AS month, -- Extract the month from the date
+        0 AS revenue, -- Set revenue to 0 for cost calculations
+        SUM(psc.cost) AS cost -- Calculate total cost by summing paid search costs
+    FROM
+        `data-analytics-mate.DA.paid_search_cost` psc 
+    GROUP BY
+        year, month -- Group results by year and month
+)
+GROUP BY
+    1, 2 -- Group the combined results by year and month
+ORDER BY
+    year, month; -- Order the results by year and then by month
