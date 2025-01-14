@@ -1,0 +1,24 @@
+Вирахуй відсоток подій page_title, що містять слово YouTube (зі стовпчика event_params.key) серед всіх, де є записи про події.
+Виведи цей відсоток у розрізі континентів.
+
+SELECT
+    sp.continent,
+    -- Calculate the percentage of sessions with 'YouTube' in page_title
+    SUM(CASE
+        WHEN params.value.string_value LIKE '%YouTube%' THEN 1 -- If 'YouTube' is present, count as 1
+        ELSE 0 -- Otherwise, count as 0
+    END) * 100.0 / COUNT(*) AS percent_session_cnt -- Divide the sum by the total count and multiply by 100 to get the percentage
+FROM
+    `DA.event_params` ep,
+    UNNEST(event_params) AS params -- Unnest the event_params array and alias it as 'params'
+JOIN
+    `data-analytics-mate.DA.session_params` sp
+ON
+    sp.ga_session_id = ep.ga_session_id
+WHERE
+    params.key = 'page_title' -- Filter for event parameters where the key is 'page_title'
+    AND params.value.string_value IS NOT NULL -- Filter out null values for page_title
+GROUP BY
+    sp.continent
+ORDER BY
+    percent_session_cnt DESC;
